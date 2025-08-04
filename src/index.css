@@ -1,0 +1,446 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #060614;
+    color: white;
+  }
+
+  /* CSS Custom Properties for Theme System */
+  :root {
+    /* Dark Theme (Default) */
+    --color-app-background: #060614;
+    --color-surface-primary: rgba(255, 255, 255, 0.1);
+    --color-surface-secondary: rgba(0, 0, 0, 0.2);
+    --color-surface-tertiary: rgba(255, 255, 255, 0.2);
+    --color-content-primary: #ffffff;
+    --color-content-secondary: #d1d5db;
+    --color-content-tertiary: #9ca3af;
+    --color-border-primary: rgba(255, 255, 255, 0.2);
+    --color-border-secondary: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Light Theme */
+  .light-theme {
+    --color-app-background: #f8fafc;
+    --color-surface-primary: rgba(255, 255, 255, 0.9);
+    --color-surface-secondary: rgba(0, 0, 0, 0.05);
+    --color-surface-tertiary: rgba(0, 0, 0, 0.1);
+    --color-content-primary: #1f2937;
+    --color-content-secondary: #4b5563;
+    --color-content-tertiary: #6b7280;
+    --color-border-primary: rgba(0, 0, 0, 0.1);
+    --color-border-secondary: rgba(0, 0, 0, 0.05);
+  }
+
+  /* Apply theme colors */
+  .bg-app-background {
+    background-color: var(--color-app-background);
+  }
+
+  .bg-surface-primary {
+    background-color: var(--color-surface-primary);
+  }
+
+  .bg-surface-secondary {
+    background-color: var(--color-surface-secondary);
+  }
+
+  .bg-surface-tertiary {
+    background-color: var(--color-surface-tertiary);
+  }
+
+  .text-content-primary {
+    color: var(--color-content-primary);
+  }
+
+  .text-content-secondary {
+    color: var(--color-content-secondary);
+  }
+
+  .text-content-tertiary {
+    color: var(--color-content-tertiary);
+  }
+
+  .border-border-primary {
+    border-color: var(--color-border-primary);
+  }
+
+  .border-border-secondary {
+    border-color: var(--color-border-secondary);
+  }
+
+  /* Hover states for surfaces */
+  .hover\:bg-surface-secondary:hover {
+    background-color: var(--color-surface-secondary);
+  }
+
+  .hover\:bg-surface-tertiary:hover {
+    background-color: var(--color-surface-tertiary);
+  }
+
+  .hover\:text-content-primary:hover {
+    color: var(--color-content-primary);
+  }
+}
+
+@layer components {
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .animate-fade-in-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+  
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes pulseGlow {
+    from {
+      box-shadow: 0 0 20px rgba(147, 51, 234, 0.4);
+    }
+    to {
+      box-shadow: 0 0 40px rgba(147, 51, 234, 0.6), 0 0 60px rgba(59, 130, 246, 0.4);
+    }
+  }
+  
+  .glass-morphism {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .cosmic-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .stellar-gradient {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+
+  /* Radial gradient utility */
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+
+  /* Space travel effects */
+  .warp-speed {
+    animation: warpSpeed 0.5s ease-in-out infinite;
+  }
+  
+  @keyframes warpSpeed {
+    0% { transform: scaleX(1) scaleY(1); opacity: 1; }
+    50% { transform: scaleX(1.5) scaleY(0.5); opacity: 0.7; }
+    100% { transform: scaleX(3) scaleY(0.1); opacity: 0; }
+  }
+
+  /* Cockpit HUD effects */
+  .hud-glow {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+  }
+
+  /* Star trail effects */
+  .star-trail {
+    animation: starTrail 2s linear infinite;
+  }
+  
+  @keyframes starTrail {
+    0% { transform: translateZ(1000px) translateX(0) translateY(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateZ(0px) translateX(0) translateY(0); opacity: 0; }
+  }
+
+  /* Engine flame effects */
+  .engine-flame {
+    animation: engineFlame 0.1s ease-in-out infinite alternate;
+  }
+  
+  @keyframes engineFlame {
+    0% { transform: scaleY(1) scaleX(1); }
+    100% { transform: scaleY(1.2) scaleX(0.9); }
+  }
+
+  /* Hyperspace effect */
+  .hyperspace {
+    animation: hyperspace 3s ease-in-out;
+  }
+  
+  @keyframes hyperspace {
+    0% { transform: perspective(1000px) rotateX(0deg) translateZ(0px); }
+    50% { transform: perspective(1000px) rotateX(10deg) translateZ(-500px); }
+    100% { transform: perspective(1000px) rotateX(0deg) translateZ(-1000px); opacity: 0; }
+  }
+
+  /* Accessibility animations */
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  /* Siri-like voice recognition animation */
+  @keyframes siri-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1.4);
+      opacity: 0;
+    }
+  }
+
+  .siri-animation {
+    animation: siri-pulse 1.5s ease-out infinite;
+  }
+
+  /* High contrast mode for accessibility */
+  .high-contrast {
+    filter: contrast(150%) brightness(120%);
+  }
+
+  /* Focus indicators for accessibility */
+  .focus-visible {
+    outline: 3px solid #8b5cf6;
+    outline-offset: 2px;
+  }
+
+  /* Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  .backdrop-blur-strong {
+    backdrop-filter: blur(20px);
+  }
+
+  /* 3D perspective utilities */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  /* Glow effects */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  
+  .glow-green {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+  }
+  
+  .glow-orange {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.5);
+  }
+
+  /* Accessibility utilities */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
+  }
+
+  .skip-link {
+    @apply absolute -top-10 left-6 bg-purple-600 text-white px-4 py-2 rounded-md z-50 focus:top-6 transition-all;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 51, 234, 0.7);
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, [role="button"] {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Enhanced focus styles for accessibility */
+button:focus, a:focus, [role="button"]:focus, input:focus, select:focus, textarea:focus {
+  outline: 2px solid rgba(147, 51, 234, 0.8);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-surface-primary: rgba(255, 255, 255, 0.3);
+    --color-border-primary: rgba(255, 255, 255, 0.5);
+  }
+  
+  .light-theme {
+    --color-surface-primary: rgba(0, 0, 0, 0.1);
+    --color-border-primary: rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce,
+  .animate-fade-in-up {
+    animation: none;
+  }
+  
+  .transition-all,
+  .transition-colors,
+  .transition-transform {
+    transition: none;
+  }
+}
+
+/* Light theme specific adjustments */
+.light-theme .bg-gradient-to-r {
+  filter: brightness(0.8) contrast(1.2);
+}
+
+.light-theme .text-white {
+  color: var(--color-content-primary) !important;
+}
+
+.light-theme .text-gray-300 {
+  color: var(--color-content-secondary) !important;
+}
+
+.light-theme .text-gray-400 {
+  color: var(--color-content-tertiary) !important;
+}
+
+/* Space shuttle cockpit styling */
+.cockpit-frame {
+  border-image: linear-gradient(45deg, #374151, #6b7280, #374151) 1;
+}
+
+/* Typewriter cursor */
+.typewriter-cursor {
+  animation: typewriterCursor 1s infinite;
+}
+
+@keyframes typewriterCursor {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Voice recognition pulse animation */
+@keyframes voice-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0.4;
+  }
+}
+
+.voice-pulse {
+  animation: voice-pulse 1s ease-in-out infinite;
+}
+
+/* Font size responsive scaling */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1200px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* Ensure text remains readable at all font sizes */
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.text-base { font-size: 1rem; }
+.text-lg { font-size: 1.125rem; }
+.text-xl { font-size: 1.25rem; }
+.text-2xl { font-size: 1.5rem; }
+.text-3xl { font-size: 1.875rem; }
+.text-4xl { font-size: 2.25rem; }
+.text-5xl { font-size: 3rem; }
+.text-6xl { font-size: 3.75rem; }
+
+/* Ensure proper contrast in light mode */
+.light-theme .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+/* StarField adjustments for light theme */
+.light-theme canvas {
+  opacity: 0.3;
+}
