@@ -57,7 +57,7 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
       
       <button
         onClick={goToToday}
-        className="px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-xl transition-all duration-300 hover:scale-105"
+        className="px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-400 hover:from-purple-700 hover:to-pink-500 text-white font-medium rounded-xl transition-all duration-300 hover:scale-105"
       >
         Today
       </button>

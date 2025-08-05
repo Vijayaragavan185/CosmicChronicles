@@ -1,16 +1,12 @@
 import React, { useEffect, useRef } from 'react';
+import spaceBackground from './bg.jpg'; // Adjust path as needed
 
-interface Star {
-  x: number;
-  y: number;
-  size: number;
-  opacity: number;
-  twinkleSpeed: number;
+interface StarFieldProps {
+  style?: React.CSSProperties;
 }
 
-export const StarField: React.FC = () => {
+export const StarField: React.FC<StarFieldProps> = ({ style = {} }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const starsRef = useRef<Star[]>([]);
   const animationRef = useRef<number>();
 
   useEffect(() => {
@@ -20,62 +16,48 @@ export const StarField: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const img = new Image();
+    img.src = spaceBackground;
+
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      drawBackground();
     };
 
-    const createStars = () => {
-      const stars: Star[] = [];
-      const numStars = Math.floor((canvas.width * canvas.height) / 8000);
+    const drawBackground = () => {
+      if (!img.complete) return;
       
-      for (let i = 0; i < numStars; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 2 + 0.5,
-          opacity: Math.random() * 0.8 + 0.2,
-          twinkleSpeed: Math.random() * 0.02 + 0.005,
-        });
-      }
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      starsRef.current = stars;
-    };
-
-    const animate = (time: number) => {
-      // Check if light theme is active
-      const isLightTheme = document.documentElement.classList.contains('light-theme');
+      // Calculate dimensions to maintain aspect ratio
+      const imgRatio = img.width / img.height;
+      const canvasRatio = canvas.width / canvas.height;
       
-      // Adjust background and star colors based on theme
-      if (isLightTheme) {
-        ctx.fillStyle = 'rgba(248, 250, 252, 0.1)';
+      let drawWidth, drawHeight, offsetX, offsetY;
+      
+      if (imgRatio > canvasRatio) {
+        // Image is wider than canvas
+        drawHeight = canvas.height;
+        drawWidth = drawHeight * imgRatio;
+        offsetX = (canvas.width - drawWidth) / 2;
+        offsetY = 0;
       } else {
-        ctx.fillStyle = 'rgba(6, 6, 20, 0.1)';
+        // Image is taller than canvas
+        drawWidth = canvas.width;
+        drawHeight = drawWidth / imgRatio;
+        offsetX = 0;
+        offsetY = (canvas.height - drawHeight) / 2;
       }
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      starsRef.current.forEach((star) => {
-        star.opacity += Math.sin(time * star.twinkleSpeed) * 0.3;
-        star.opacity = Math.max(0.1, Math.min(1, star.opacity));
-
-        ctx.globalAlpha = star.opacity * (isLightTheme ? 0.4 : 1);
-        ctx.fillStyle = isLightTheme ? '#1f2937' : '#ffffff';
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      animationRef.current = requestAnimationFrame(animate);
+      
+      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
     };
 
+    img.onload = drawBackground;
     resizeCanvas();
-    createStars();
-    animate(0);
 
-    window.addEventListener('resize', () => {
-      resizeCanvas();
-      createStars();
-    });
+    window.addEventListener('resize', resizeCanvas);
 
     return () => {
       if (animationRef.current) {
@@ -85,29 +67,11 @@ export const StarField: React.FC = () => {
     };
   }, []);
 
-  // Listen for theme changes
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      // Theme change detected, stars will adjust automatically in the next animation frame
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 w-full h-full pointer-events-none z-0"
-      style={{ 
-        background: document.documentElement.classList.contains('light-theme')
-          ? 'radial-gradient(ellipse at center, #e2e8f0 0%, #f8fafc 100%)'
-          : 'radial-gradient(ellipse at center, #1a1a3e 0%, #060614 100%)'
-      }}
+      style={style} // Correctly apply the style prop here
     />
   );
 };

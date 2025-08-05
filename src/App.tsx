@@ -181,17 +181,19 @@ function App() {
 
 
   const navigationItems = [
-    { id: 'events', label: 'Events', icon: Telescope, color: 'from-purple-600 to-blue-600' },
-    { id: 'timeline', label: 'Timeline', icon: Rocket, color: 'from-orange-600 to-red-600' },
-    { id: 'solar-system', label: 'Solar System', icon: Orbit, color: 'from-yellow-600 to-orange-600' },
-    { id: 'education', label: 'Education', icon: Play, color: 'from-red-600 to-pink-600' },
-    { id: 'calculators', label: 'Calculators', icon: Calculator, color: 'from-teal-600 to-green-600' },
-    { id: 'interstellar', label: 'Interstellar', icon: Zap, color: 'from-violet-600 to-purple-600' },
-    { id: 'games', label: 'Games', icon: Gamepad2, color: 'from-green-600 to-emerald-600' },
-    { id: 'horoscope', label: 'Horoscope', icon: Stars, color: 'from-indigo-600 to-purple-600' },
-    { id: 'social', label: 'Social', icon: Users, color: 'from-blue-600 to-cyan-600' },
-    { id: 'solarflare', label: 'Solar Flare', icon: Zap, color: 'from-orange-600 to-red-600' },
-    { id: 'cargo', label: 'Cargo Management', icon: ShoppingCart, color: 'from-cyan-600 to-blue-600' }
+    { id: 'cargo', label: 'Cargo Management', icon: ShoppingCart, color: 'from-purple-600 to-pink-400'},
+    { id: 'solarflare', label: 'Solar Flare', icon: Zap, color: 'from-purple-600 to-pink-400' },
+    { id: 'events', label: 'Events', icon: Telescope, color: 'from-purple-600 to-pink-400' },
+    { id: 'timeline', label: 'Timeline', icon: Rocket, color: 'from-purple-600 to-pink-400' },
+    { id: 'solar-system', label: 'Solar System', icon: Orbit, color: 'from-purple-600 to-pink-400' },
+    { id: 'education', label: 'Education', icon: Play, color: 'from-purple-600 to-pink-400' },
+    { id: 'calculators', label: 'Calculators', icon: Calculator, color: 'from-purple-600 to-pink-400' },
+    { id: 'interstellar', label: 'Interstellar', icon: Zap, color: 'from-purple-600 to-pink-400' },
+    { id: 'games', label: 'Games', icon: Gamepad2, color: 'from-purple-600 to-pink-400' },
+    { id: 'horoscope', label: 'Horoscope', icon: Stars, color: 'from-purple-600 to-pink-400' },
+    { id: 'social', label: 'Social', icon: Users, color: 'from-purple-600 to-pink-400' },
+    
+    
   ];
 
 
@@ -276,14 +278,14 @@ function App() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-app-background text-content-primary">
-      <StarField />
+      <StarField style={{opacity: 0.5,transition: 'opacity 0.5s ease-in-out'}} />
       
       <div className="relative z-10 min-h-screen">
         {/* Header with Visual Assist */}
         <header className="relative pt-12 pb-8">
           <div className="container mx-auto px-6">
             {/* Visual Assist Button */}
-            <div className="absolute top-6 right-6">
+            <div className="absolute top-7 right-7 bg-gradient-to-r from-purple-600 to-pink-400 hover:from-purple-700 hover:to-pink-500 rounded-full">
               <VisualAssist
                 onVisionSupportModeChange={handleVisionSupportModeChange}
                 onFontSizeChange={setFontSize}
@@ -296,13 +298,13 @@ function App() {
 
             <div className="text-center">
               <div className="flex items-center justify-center space-x-3 mb-6">
-                <div className="p-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full">
+                <div className="p-3 bg-gradient-to-r from-purple-600 to-pink-400 rounded-full">
                   <Telescope className="w-8 h-8 text-white" />
                 </div>
-                <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Cosmic Chronicles
+                <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                  ASTERA NEXUS
                 </h1>
-                <div className="p-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full">
+                <div className="p-3 bg-gradient-to-r from-pink-400 to-purple-600 rounded-full">
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
               </div>
@@ -311,7 +313,7 @@ function App() {
                 Discover the astronomical events, horoscopes, and cosmic games that connect us to the universe
               </p>
               
-              <div className="flex items-center justify-center space-x-2 text-purple-300">
+              <div className="flex items-center justify-center space-x-2 text-pink-300">
                 <Globe className="w-5 h-5" />
                 <span className="text-lg">
                   Exploring the cosmos on {formatDateForTitle(selectedDate)}
@@ -410,7 +412,7 @@ function App() {
       {/* Floating Chatbot Button */}
       <button
         onClick={() => setIsChatbotOpen(true)}
-        className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-purple-600 to-pink-400 hover:from-purple-700 hover:to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-500"
         aria-label="Open chatbot"
       >
         <MessageCircle className="w-6 h-6" />
