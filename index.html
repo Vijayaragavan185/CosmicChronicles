@@ -1,3 +1,19 @@
+  // Fix for "Cannot set property ethereum" error
+  if (typeof window !== 'undefined') {
+    try {
+      // Create a writable ethereum property if it doesn't exist
+      if (!window.hasOwnProperty('ethereum')) {
+        Object.defineProperty(window, 'ethereum', {
+          value: undefined,
+          writable: true,
+          configurable: true
+        });
+      }
+    } catch (e) {
+      console.warn('Ethereum property already exists');
+    }
+  }
+</script>
 <!doctype html>
 <html lang="en">
   <head>

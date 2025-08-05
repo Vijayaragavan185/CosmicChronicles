@@ -25,9 +25,12 @@ import { useScreenReader } from './hooks/useScreenReader';
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation';
 import { getEventsForDate } from './data/events';
 import { AstronomicalEvent } from './types/Event';
+import SonicCosmos from './components/SonicCosmos';
+import ARSolarSystem from './components/ARSolarSystem';
+import { Headphones, Smartphone } from 'lucide-react';
 
-type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'exoplanet' | 'interstellar';
-
+//type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'exoplanet' | 'interstellar';
+type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'exoplanet' | 'interstellar' | 'sonic' | 'ar-solar';
 function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<AstronomicalEvent[]>([]);
@@ -187,6 +190,8 @@ function App() {
     { id: 'social', label: 'Social', icon: Users, color: 'from-blue-600 to-cyan-600' },
     { id: 'solarflare', label: 'Solar Flare', icon: Zap, color: 'from-orange-600 to-red-600' },
     { id: 'cargo', label: 'Cargo Management', icon: ShoppingCart, color: 'from-cyan-600 to-blue-600' },
+    { id: 'sonic', label: 'Sonic Cosmos', icon: Headphones, color: 'from-purple-600 to-pink-600' },
+    { id: 'ar-solar', label: 'AR Solar System', icon: Smartphone, color: 'from-blue-600 to-cyan-600' },
     { id: 'exoplanet', label: 'Exoplanet AI', icon: Globe, color: 'from-green-600 to-emerald-600' }
   ];
 
@@ -214,6 +219,10 @@ function App() {
         return <ExoplanetPredictor />;
       case 'interstellar':
         return <InterstellarTech />;
+      case 'sonic':
+        return <SonicCosmos />;
+      case 'ar-solar':
+        return <ARSolarSystem />;
       case 'events':
       default:
         return (
