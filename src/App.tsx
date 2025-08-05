@@ -16,10 +16,7 @@ import { InterstellarTech } from './components/InterstellarTech';
 import { SpaceEducation } from './components/SpaceEducation';
 import { SpaceFranchise } from './components/SpaceFranchise';
 import SolarFlare from './components/SolarFlare';
-<<<<<<< HEAD
-import { ExoplanetPredictor } from './components/ExoplanetPredictor';
-=======
->>>>>>> 6d82eedeaa0cd6e46d6e91e4ce6eaef6d37508ac
+import ExoplanetPredictor from './components/ExoplanetPredictor';
 
 import { SpaceShuttleIntro } from './components/SpaceShuttleIntro';
 import { VisualAssist } from './components/VisualAssist';
@@ -32,11 +29,7 @@ import { AstronomicalEvent } from './types/Event';
 import { CargoManagement } from './components/CargoManagement';
 
 // Change line ~21
-<<<<<<< HEAD
 type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'exoplanet' | 'interstellar';
-=======
-type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'interstellar';
->>>>>>> 6d82eedeaa0cd6e46d6e91e4ce6eaef6d37508ac
 
 
 
@@ -199,11 +192,8 @@ function App() {
     { id: 'horoscope', label: 'Horoscope', icon: Stars, color: 'from-indigo-600 to-purple-600' },
     { id: 'social', label: 'Social', icon: Users, color: 'from-blue-600 to-cyan-600' },
     { id: 'solarflare', label: 'Solar Flare', icon: Zap, color: 'from-orange-600 to-red-600' },
-    { id: 'cargo', label: 'Cargo Management', icon: ShoppingCart, color: 'from-cyan-600 to-blue-600' }
-<<<<<<< HEAD
+    { id: 'cargo', label: 'Cargo Management', icon: ShoppingCart, color: 'from-cyan-600 to-blue-600' },
     { id: 'exoplanet', label: 'Exoplanet AI', icon: Globe, color: 'from-green-600 to-emerald-600' }
-=======
->>>>>>> 6d82eedeaa0cd6e46d6e91e4ce6eaef6d37508ac
   ];
 
 
@@ -229,11 +219,8 @@ function App() {
         return <InterstellarTech />;
       case 'cargo':
         return <CargoManagement />;
-<<<<<<< HEAD
       case 'exoplanet':
         return <ExoplanetPredictor />;
-=======
->>>>>>> 6d82eedeaa0cd6e46d6e91e4ce6eaef6d37508ac
       case 'events':
       default:
         return (
