@@ -16,8 +16,8 @@ import { InterstellarTech } from './components/InterstellarTech';
 import { SpaceEducation } from './components/SpaceEducation';
 import { SpaceFranchise } from './components/SpaceFranchise';
 import SolarFlare from './components/SolarFlare';
-import ExoplanetPredictor from './components/ExoplanetPredictor';
-
+import { CargoManagement } from './components/CargoManagement';
+import { ExoplanetPredictor } from './components/ExoplanetPredictor';
 import { SpaceShuttleIntro } from './components/SpaceShuttleIntro';
 import { VisualAssist } from './components/VisualAssist';
 import { VoiceRecognition } from './components/VoiceRecognition';
@@ -26,12 +26,7 @@ import { useKeyboardNavigation } from './hooks/useKeyboardNavigation';
 import { getEventsForDate } from './data/events';
 import { AstronomicalEvent } from './types/Event';
 
-import { CargoManagement } from './components/CargoManagement';
-
-// Change line ~21
 type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'exoplanet' | 'interstellar';
-
-
 
 function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -180,7 +175,6 @@ function App() {
     setShowIntro(false);
   };
 
-
   const navigationItems = [
     { id: 'events', label: 'Events', icon: Telescope, color: 'from-purple-600 to-blue-600' },
     { id: 'timeline', label: 'Timeline', icon: Rocket, color: 'from-orange-600 to-red-600' },
@@ -195,7 +189,6 @@ function App() {
     { id: 'cargo', label: 'Cargo Management', icon: ShoppingCart, color: 'from-cyan-600 to-blue-600' },
     { id: 'exoplanet', label: 'Exoplanet AI', icon: Globe, color: 'from-green-600 to-emerald-600' }
   ];
-
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -215,12 +208,12 @@ function App() {
         return <SocialHub selectedDate={selectedDate} />;
       case 'solarflare':
         return <SolarFlare />;
-      case 'interstellar':
-        return <InterstellarTech />;
       case 'cargo':
         return <CargoManagement />;
       case 'exoplanet':
         return <ExoplanetPredictor />;
+      case 'interstellar':
+        return <InterstellarTech />;
       case 'events':
       default:
         return (
@@ -327,7 +320,7 @@ function App() {
 
         {/* Navigation */}
         <div className="container mx-auto px-6 mb-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-3 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 max-w-7xl mx-auto">
             {navigationItems
               .filter(item => !visionSupportMode || ['events', 'timeline'].includes(item.id))
               .map((item) => {
