@@ -27,7 +27,6 @@ interface DonkiCMEData {
   link: string;
 }
 
-// Original Solar Flare Data Interface
 interface SolarFlareData {
   id: string;
   class: string;
@@ -38,7 +37,6 @@ interface SolarFlareData {
   effects: string[];
 }
 
-// Enhanced Solar Flare Data Interface
 interface EnhancedSolarFlareData extends SolarFlareData {
   latitude?: number;
   longitude?: number;
@@ -60,7 +58,6 @@ interface SolarFlareEvent {
   description: string;
 }
 
-// Prediction Interfaces
 interface SatelliteDamagePrediction {
   riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   confidence: number;
@@ -81,6 +78,15 @@ interface EarthImpactPrediction {
   recommendations: string[];
 }
 
+interface MLPrediction {
+  habitabilityScore: SatelliteDamagePrediction;
+  similarEarth: number;
+  biosignaturePotential: number;
+  estimatedLifeTypes: string[];
+  timeToInvestigate: number;
+  missionFeasibility: 'IMPOSSIBLE' | 'VERY_DIFFICULT' | 'CHALLENGING' | 'FEASIBLE';
+}
+
 const SolarFlare: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'monitor' | 'education' | 'history' | 'effects' | 'prediction'>('monitor');
   const [currentFlareData, setCurrentFlareData] = useState<EnhancedSolarFlareData | null>(null);
@@ -97,30 +103,25 @@ const SolarFlare: React.FC = () => {
   const [isPredicting, setIsPredicting] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
-  // NASA API Configuration - fallback when no .env file
-  const NASA_API_KEY = 'DEMO_KEY'; // NASA provides DEMO_KEY for testing
+  // NASA API Configuration
+  const NASA_API_KEY = 'DEMO_KEY';
   const NASA_BASE_URL = 'https://api.nasa.gov/DONKI';
 
-  // Helper function to generate realistic effects based on CME speed
   const generateEffectsFromSpeed = (speed: number): string[] => {
     const effects: string[] = [];
-    
     if (speed > 400) effects.push('Radio Blackout');
     if (speed > 600) effects.push('GPS Interference');
     if (speed > 800) effects.push('Satellite Anomalies');
     if (speed > 1000) effects.push('Power Grid Alert');
     if (speed > 1200) effects.push('Aurora Visible');
-    
     return effects;
   };
 
-  // Prediction Algorithm: Satellite Damage Assessment
   const predictSatelliteDamage = (flareData: EnhancedSolarFlareData): SatelliteDamagePrediction => {
     const speed = flareData.cmeSpeed || flareData.intensity * 100;
     const intensity = flareData.intensity;
     const halfAngle = flareData.halfAngle || 30;
     
-    // ML-inspired risk calculation
     const riskScore = (speed / 1000) * 0.4 + (intensity / 10) * 0.3 + (halfAngle / 90) * 0.3;
     
     let riskLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
@@ -172,18 +173,14 @@ const SolarFlare: React.FC = () => {
     };
   };
 
-  // Prediction Algorithm: Earth Impact Assessment
   const predictEarthImpact = (flareData: EnhancedSolarFlareData): EarthImpactPrediction => {
     const speed = flareData.cmeSpeed || flareData.intensity * 100;
     const intensity = flareData.intensity;
     const latitude = flareData.latitude || 0;
-    const longitude = flareData.longitude || 0;
     
-    // Calculate arrival time (CME travel time from Sun to Earth)
-    const travelTime = (149.6e6) / (speed * 1000); // Distance in km / speed in km/s
+    const travelTime = (149.6e6) / (speed * 1000);
     const arrivalTime = new Date(flareData.timestamp.getTime() + travelTime * 1000);
     
-    // Impact probability calculation
     const directionFactor = Math.max(0, 1 - Math.abs(latitude) / 90);
     const speedFactor = Math.min(speed / 2000, 1);
     const intensityFactor = intensity / 10;
@@ -242,12 +239,10 @@ const SolarFlare: React.FC = () => {
     };
   };
 
-  // Run predictions when data changes
   useEffect(() => {
     if (currentFlareData && activeTab === 'prediction') {
       setIsPredicting(true);
       
-      // Simulate ML processing time
       setTimeout(() => {
         const satellitePred = predictSatelliteDamage(currentFlareData);
         const earthPred = predictEarthImpact(currentFlareData);
@@ -259,7 +254,6 @@ const SolarFlare: React.FC = () => {
     }
   }, [currentFlareData, activeTab]);
 
-  // Demo data generator
   const generateDemoData = () => {
     const demoFlareData: EnhancedSolarFlareData = {
       id: 'DEMO-2025-001',
@@ -283,7 +277,6 @@ const SolarFlare: React.FC = () => {
     setShowDemo(true);
   };
 
-  // Convert NASA CME data to our solar flare format
   const convertCMEToSolarFlareData = (cmeData: DonkiCMEData[]): EnhancedSolarFlareData[] => {
     return cmeData.map(cme => ({
       id: cme.associatedCMEID,
@@ -305,7 +298,6 @@ const SolarFlare: React.FC = () => {
     }));
   };
 
-  // Fetch NASA CME Analysis data
   const fetchCMEAnalysis = useCallback(async (startDate: string, endDate: string): Promise<DonkiCMEData[]> => {
     setIsLoading(true);
     setApiError(null);
@@ -332,7 +324,6 @@ const SolarFlare: React.FC = () => {
     }
   }, [NASA_API_KEY, NASA_BASE_URL]);
 
-  // Real-time data fetching effect
   useEffect(() => {
     if (useRealData) {
       const fetchRealTimeData = async () => {
@@ -363,7 +354,6 @@ const SolarFlare: React.FC = () => {
     }
   }, [useRealData, fetchCMEAnalysis]);
 
-  // Simulated real-time solar flare data
   useEffect(() => {
     const generateFlareData = (): EnhancedSolarFlareData => ({
       id: `SF-${Date.now()}`,

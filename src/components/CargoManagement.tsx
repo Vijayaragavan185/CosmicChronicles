@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
-  Package, Search, ArrowUpDown, Trash2, Send, Activity, 
+  Package, Search, ArrowUpDown, Trash2, Send, Activity,
   Clock, AlertTriangle, CheckCircle, Box, Truck, Database,
   Filter, BarChart3, Settings, RefreshCw, Target, Zap,
-  Calendar, MapPin, Weight, Thermometer, Star
+  Calendar, MapPin, Weight, Thermometer, Star, User,
+  TrendingUp, TrendingDown, Eye, Brain, Lightbulb, Timer
 } from 'lucide-react';
 
 // Data Structures
@@ -13,63 +14,69 @@ interface CargoItem {
   category: 'FOOD' | 'MEDICAL' | 'EQUIPMENT' | 'RESEARCH' | 'MAINTENANCE' | 'PERSONAL';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   weight: number; // kg
-  volume: number; // cubic meters
+  volume: number; // liters
   expiryDate?: Date;
-  location?: StorageLocation;
   status: 'ACTIVE' | 'EXPIRED' | 'WASTE' | 'CONSUMED';
-  acquisitionDate: Date;
+  location: string;
+  addedDate: Date;
   lastAccessed?: Date;
-  accessFrequency: number;
-  temperature?: 'AMBIENT' | 'COLD' | 'FROZEN';
+  accessCount: number;
+  temperature?: number; // Celsius
   fragile: boolean;
+  description: string;
 }
 
-interface StorageLocation {
-  compartment: string;
-  rack: string;
-  position: { x: number; y: number; z: number };
-  accessibility: number; // 1-10 scale
-  maxWeight: number;
-  maxVolume: number;
-  currentWeight: number;
-  currentVolume: number;
-  temperature: 'AMBIENT' | 'COLD' | 'FROZEN';
+interface OptimizationSuggestion {
+  id: string;
+  type: 'PLACEMENT' | 'RETRIEVAL' | 'REARRANGEMENT' | 'DISPOSAL' | 'PREPARATION';
+  title: string;
+  description: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  estimatedTime: number; // minutes
+  energySaving: number; // percentage
+  items: string[]; // item IDs
+  location: string;
+  reason: string;
 }
 
 interface ActionLog {
   id: string;
   timestamp: Date;
-  action: 'STORE' | 'RETRIEVE' | 'REARRANGE' | 'DISPOSE' | 'RETURN';
+  astronaut: string;
+  action: 'ADD' | 'REMOVE' | 'MOVE' | 'ACCESS' | 'DISPOSE' | 'OPTIMIZE';
   itemId: string;
   itemName: string;
-  location?: string;
-  astronautId: string;
-  duration: number; // seconds
+  fromLocation?: string;
+  toLocation?: string;
+  duration: number; // minutes
   success: boolean;
   notes?: string;
 }
 
-interface OptimizationSuggestion {
-  type: 'PLACEMENT' | 'RETRIEVAL' | 'REARRANGE' | 'DISPOSAL' | 'RETURN';
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  title: string;
-  description: string;
-  estimatedTime: number;
-  energyImpact: number;
-  items: string[];
-  actions: string[];
+interface AnalyticsData {
+  totalItems: number;
+  totalWeight: number;
+  totalVolume: number;
+  categoryBreakdown: Record<string, number>;
+  priorityBreakdown: Record<string, number>;
+  utilizationRate: number;
+  averageAccessTime: number;
+  expiringItems: number;
+  wasteItems: number;
+  criticalItems: number;
 }
 
 export const CargoManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'inventory' | 'optimization' | 'analytics' | 'logs'>('inventory');
-  const [cargoItems, setCargoItems] = useState<CargoItem[]>([]);
-  const [storageLocations, setStorageLocations] = useState<StorageLocation[]>([]);
+  const [items, setItems] = useState<CargoItem[]>([]);
+  const [suggestions, setSuggestions] = useState<OptimizationSuggestion[]>([]);
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [selectedPriority, setSelectedPriority] = useState<string>('ALL');
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [suggestions, setSuggestions] = useState<OptimizationSuggestion[]>([]);
+  const [filterCategory, setFilterCategory] = useState<string>('ALL');
+  const [filterPriority, setFilterPriority] = useState<string>('ALL');
+  const [sortBy, setSortBy] = useState<'name' | 'priority' | 'expiry' | 'access'>('priority');
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   // Initialize demo data
   useEffect(() => {
@@ -77,353 +84,325 @@ export const CargoManagement: React.FC = () => {
   }, []);
 
   const initializeDemoData = () => {
-    // Demo storage locations
-    const locations: StorageLocation[] = [
+    const demoItems: CargoItem[] = [
       {
-        compartment: 'Node 1',
-        rack: 'A-1',
-        position: { x: 0, y: 0, z: 0 },
-        accessibility: 9,
-        maxWeight: 50,
-        maxVolume: 2.5,
-        currentWeight: 32,
-        currentVolume: 1.8,
-        temperature: 'AMBIENT'
-      },
-      {
-        compartment: 'Node 1',
-        rack: 'A-2',
-        position: { x: 1, y: 0, z: 0 },
-        accessibility: 8,
-        maxWeight: 50,
-        maxVolume: 2.5,
-        currentWeight: 45,
-        currentVolume: 2.2,
-        temperature: 'COLD'
-      },
-      {
-        compartment: 'Node 2',
-        rack: 'B-1',
-        position: { x: 0, y: 1, z: 0 },
-        accessibility: 7,
-        maxWeight: 75,
-        maxVolume: 3.0,
-        currentWeight: 60,
-        currentVolume: 2.1,
-        temperature: 'FROZEN'
-      },
-      {
-        compartment: 'Node 2',
-        rack: 'B-2',
-        position: { x: 1, y: 1, z: 0 },
-        accessibility: 6,
-        maxWeight: 75,
-        maxVolume: 3.0,
-        currentWeight: 25,
-        currentVolume: 1.0,
-        temperature: 'AMBIENT'
-      }
-    ];
-
-    // Demo cargo items
-    const items: CargoItem[] = [
-      {
-        id: 'FOOD-001',
-        name: 'Rehydratable Beef Stew',
-        category: 'FOOD',
-        priority: 'HIGH',
-        weight: 0.3,
-        volume: 0.1,
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        location: locations[0],
-        status: 'ACTIVE',
-        acquisitionDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        lastAccessed: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        accessFrequency: 15,
-        temperature: 'AMBIENT',
-        fragile: false
-      },
-      {
-        id: 'MED-001',
+        id: 'item-001',
         name: 'Emergency Medical Kit',
         category: 'MEDICAL',
         priority: 'CRITICAL',
         weight: 2.5,
-        volume: 0.5,
-        location: locations[0],
+        volume: 8.0,
         status: 'ACTIVE',
-        acquisitionDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-        lastAccessed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        accessFrequency: 3,
-        fragile: true
+        location: 'Module-A-Compartment-1',
+        addedDate: new Date('2025-01-15'),
+        lastAccessed: new Date('2025-01-20'),
+        accessCount: 3,
+        fragile: true,
+        description: 'Advanced emergency medical supplies for critical situations'
       },
       {
-        id: 'EQP-001',
-        name: 'Orbital Repair Tool Set',
+        id: 'item-002',
+        name: 'Protein Bars (50 pack)',
+        category: 'FOOD',
+        priority: 'HIGH',
+        weight: 3.2,
+        volume: 12.0,
+        expiryDate: new Date('2025-06-15'),
+        status: 'ACTIVE',
+        location: 'Module-B-Compartment-3',
+        addedDate: new Date('2025-01-10'),
+        lastAccessed: new Date('2025-02-01'),
+        accessCount: 12,
+        fragile: false,
+        description: 'High-energy protein bars for daily nutrition'
+      },
+      {
+        id: 'item-003',
+        name: 'Solar Panel Diagnostic Tool',
         category: 'EQUIPMENT',
         priority: 'MEDIUM',
-        weight: 5.2,
-        volume: 0.8,
-        location: locations[1],
-        status: 'ACTIVE',
-        acquisitionDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-        lastAccessed: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        accessFrequency: 8,
-        fragile: false
-      },
-      {
-        id: 'RES-001',
-        name: 'Microgravity Plant Samples',
-        category: 'RESEARCH',
-        priority: 'HIGH',
         weight: 1.8,
-        volume: 0.3,
-        expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        location: locations[2],
+        volume: 5.5,
         status: 'ACTIVE',
-        acquisitionDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-        lastAccessed: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        accessFrequency: 25,
-        temperature: 'COLD',
-        fragile: true
+        location: 'Module-C-Compartment-2',
+        addedDate: new Date('2025-01-08'),
+        lastAccessed: new Date('2025-01-25'),
+        accessCount: 5,
+        fragile: true,
+        description: 'Precision instrument for solar panel maintenance'
       },
       {
-        id: 'FOOD-002',
-        name: 'Expired Protein Bars',
+        id: 'item-004',
+        name: 'Water Purification Tablets',
+        category: 'MEDICAL',
+        priority: 'HIGH',
+        weight: 0.5,
+        volume: 2.0,
+        expiryDate: new Date('2025-12-31'),
+        status: 'ACTIVE',
+        location: 'Module-A-Compartment-4',
+        addedDate: new Date('2025-01-12'),
+        lastAccessed: new Date('2025-01-30'),
+        accessCount: 8,
+        fragile: false,
+        description: 'Emergency water purification supplies'
+      },
+      {
+        id: 'item-005',
+        name: 'Expired Ration Pack',
         category: 'FOOD',
         priority: 'LOW',
-        weight: 0.8,
-        volume: 0.2,
-        expiryDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        location: locations[3],
+        weight: 1.2,
+        volume: 4.0,
+        expiryDate: new Date('2025-01-20'),
         status: 'EXPIRED',
-        acquisitionDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-        lastAccessed: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        accessFrequency: 0,
-        fragile: false
+        location: 'Module-B-Compartment-1',
+        addedDate: new Date('2024-11-15'),
+        lastAccessed: new Date('2025-01-18'),
+        accessCount: 2,
+        fragile: false,
+        description: 'Expired food ration requiring disposal'
       }
     ];
 
-    // Demo action logs
-    const logs: ActionLog[] = [
+    const demoSuggestions: OptimizationSuggestion[] = [
       {
-        id: 'LOG-001',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        action: 'RETRIEVE',
-        itemId: 'FOOD-001',
-        itemName: 'Rehydratable Beef Stew',
-        location: 'Node 1 - A-1',
-        astronautId: 'AST-001',
-        duration: 45,
-        success: true,
-        notes: 'Retrieved for lunch preparation'
+        id: 'sug-001',
+        type: 'PLACEMENT',
+        title: 'Optimize Medical Supply Placement',
+        description: 'Move critical medical items to more accessible locations near the main airlock',
+        priority: 'HIGH',
+        estimatedTime: 15,
+        energySaving: 25,
+        items: ['item-001'],
+        location: 'Module-A-Compartment-1',
+        reason: 'Frequently accessed items should be in primary access zones'
       },
       {
-        id: 'LOG-002',
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        action: 'STORE',
-        itemId: 'RES-001',
-        itemName: 'Microgravity Plant Samples',
-        location: 'Node 2 - B-1',
-        astronautId: 'AST-002',
-        duration: 120,
-        success: true,
-        notes: 'Stored in cold storage for preservation'
+        id: 'sug-002',
+        type: 'DISPOSAL',
+        title: 'Schedule Waste Disposal',
+        description: 'Remove expired food items and prepare for next cargo return mission',
+        priority: 'MEDIUM',
+        estimatedTime: 10,
+        energySaving: 15,
+        items: ['item-005'],
+        location: 'Waste Storage Module',
+        reason: 'Expired items consume valuable storage space'
       },
       {
-        id: 'LOG-003',
-        timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
-        action: 'REARRANGE',
-        itemId: 'EQP-001',
-        itemName: 'Orbital Repair Tool Set',
-        location: 'Node 1 - A-2',
-        astronautId: 'AST-001',
-        duration: 180,
-        success: true,
-        notes: 'Moved to more accessible location before EVA'
+        id: 'sug-003',
+        type: 'REARRANGEMENT',
+        title: 'Rebalance Module-B Storage',
+        description: 'Redistribute weight in Module-B to improve center of gravity',
+        priority: 'LOW',
+        estimatedTime: 30,
+        energySaving: 10,
+        items: ['item-002'],
+        location: 'Module-B-Compartment-2',
+        reason: 'Current weight distribution may affect station stability'
       }
     ];
 
-    setCargoItems(items);
-    setStorageLocations(locations);
-    setActionLogs(logs);
+    const demoLogs: ActionLog[] = [
+      {
+        id: 'log-001',
+        timestamp: new Date('2025-02-05T10:30:00Z'),
+        astronaut: 'Commander Sarah Chen',
+        action: 'ACCESS',
+        itemId: 'item-001',
+        itemName: 'Emergency Medical Kit',
+        fromLocation: 'Module-A-Compartment-1',
+        duration: 5,
+        success: true,
+        notes: 'Routine medical supplies inventory check'
+      },
+      {
+        id: 'log-002',
+        timestamp: new Date('2025-02-04T14:15:00Z'),
+        astronaut: 'Engineer Alex Rodriguez',
+        action: 'MOVE',
+        itemId: 'item-003',
+        itemName: 'Solar Panel Diagnostic Tool',
+        fromLocation: 'Module-C-Compartment-1',
+        toLocation: 'Module-C-Compartment-2',
+        duration: 12,
+        success: true,
+        notes: 'Relocated for better organization'
+      },
+      {
+        id: 'log-003',
+        timestamp: new Date('2025-02-03T16:45:00Z'),
+        astronaut: 'Scientist Dr. Kim Park',
+        action: 'ADD',
+        itemId: 'item-004',
+        itemName: 'Water Purification Tablets',
+        toLocation: 'Module-A-Compartment-4',
+        duration: 8,
+        success: true,
+        notes: 'Added new emergency supplies from recent cargo delivery'
+      }
+    ];
+
+    setItems(demoItems);
+    setSuggestions(demoSuggestions);
+    setActionLogs(demoLogs);
   };
 
-  // Efficient search and filter with memoization
-  const filteredItems = useMemo(() => {
-    return cargoItems.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           item.id.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
-      const matchesPriority = selectedPriority === 'ALL' || item.priority === selectedPriority;
-      
-      return matchesSearch && matchesCategory && matchesPriority;
-    });
-  }, [cargoItems, searchQuery, selectedCategory, selectedPriority]);
-
-  // AI-Powered Optimization Algorithms
+  // Generate AI optimization suggestions
   const generateOptimizationSuggestions = useCallback(() => {
-    setIsOptimizing(true);
+    setIsLoading(true);
     
     setTimeout(() => {
       const newSuggestions: OptimizationSuggestion[] = [];
 
-      // 1. Quick Retrieval Optimization
-      const frequentItems = cargoItems
-        .filter(item => item.status === 'ACTIVE')
-        .sort((a, b) => b.accessFrequency - a.accessFrequency)
-        .slice(0, 5);
+      // Check for expired items
+      const expiredItems = items.filter(item => 
+        item.expiryDate && item.expiryDate < new Date() && item.status === 'ACTIVE'
+      );
+      
+      if (expiredItems.length > 0) {
+        newSuggestions.push({
+          id: `sug-disposal-${Date.now()}`,
+          type: 'DISPOSAL',
+          title: `Dispose ${expiredItems.length} Expired Items`,
+          description: 'Move expired items to waste storage for next cargo return',
+          priority: 'HIGH',
+          estimatedTime: expiredItems.length * 3,
+          energySaving: 20,
+          items: expiredItems.map(item => item.id),
+          location: 'Waste Storage Module',
+          reason: 'Expired items pose health risks and waste storage space'
+        });
+      }
 
+      // Check for frequently accessed items in poor locations
+      const frequentItems = items.filter(item => item.accessCount > 5);
       frequentItems.forEach(item => {
-        if (item.location && item.location.accessibility < 8) {
+        if (!item.location.includes('Compartment-1')) {
           newSuggestions.push({
-            type: 'REARRANGE',
+            id: `sug-placement-${item.id}`,
+            type: 'PLACEMENT',
+            title: `Relocate Frequently Used ${item.name}`,
+            description: 'Move to primary access compartment for easier retrieval',
             priority: 'MEDIUM',
-            title: `Move ${item.name} to High-Access Location`,
-            description: `Item accessed ${item.accessFrequency} times. Current accessibility: ${item.location.accessibility}/10`,
-            estimatedTime: 180,
-            energyImpact: 2,
+            estimatedTime: 10,
+            energySaving: 30,
             items: [item.id],
-            actions: [`Move to rack with accessibility ≥ 8`]
+            location: 'Module-A-Compartment-1',
+            reason: 'High access frequency items should be in primary zones'
           });
         }
       });
 
-      // 2. Expiry Management
-      const expiringItems = cargoItems.filter(item => 
-        item.expiryDate && 
-        item.status === 'ACTIVE' && 
-        item.expiryDate.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000
-      );
-
-      if (expiringItems.length > 0) {
-        newSuggestions.push({
-          type: 'RETRIEVAL',
-          priority: 'HIGH',
-          title: `${expiringItems.length} Items Expiring Soon`,
-          description: 'Prioritize usage or prepare for disposal',
-          estimatedTime: 300,
-          energyImpact: 3,
-          items: expiringItems.map(item => item.id),
-          actions: ['Use items before expiry', 'Prepare disposal plan']
-        });
-      }
-
-      // 3. Waste Management
-      const wasteItems = cargoItems.filter(item => item.status === 'EXPIRED' || item.status === 'WASTE');
-      
-      if (wasteItems.length > 0) {
-        newSuggestions.push({
-          type: 'DISPOSAL',
-          priority: 'URGENT',
-          title: `${wasteItems.length} Items Ready for Disposal`,
-          description: 'Free up storage space and prepare for waste return',
-          estimatedTime: 240,
-          energyImpact: 4,
-          items: wasteItems.map(item => item.id),
-          actions: ['Move to waste container', 'Schedule return mission']
-        });
-      }
-
-      // 4. Space Optimization
-      const overloadedLocations = storageLocations.filter(loc => 
-        (loc.currentWeight / loc.maxWeight) > 0.85 || 
-        (loc.currentVolume / loc.maxVolume) > 0.85
-      );
-
-      overloadedLocations.forEach(location => {
-        newSuggestions.push({
-          type: 'REARRANGE',
-          priority: 'MEDIUM',
-          title: `Optimize ${location.compartment} - ${location.rack}`,
-          description: `Storage at ${Math.round((location.currentVolume / location.maxVolume) * 100)}% capacity`,
-          estimatedTime: 420,
-          energyImpact: 5,
-          items: [],
-          actions: ['Redistribute items to underutilized locations', 'Consolidate similar items']
-        });
+      // Check for critical items accessibility
+      const criticalItems = items.filter(item => item.priority === 'CRITICAL');
+      criticalItems.forEach(item => {
+        if (item.location.includes('Compartment-3') || item.location.includes('Compartment-4')) {
+          newSuggestions.push({
+            id: `sug-critical-${item.id}`,
+            type: 'PLACEMENT',
+            title: `Prioritize Critical Item: ${item.name}`,
+            description: 'Move critical priority item to immediate access location',
+            priority: 'CRITICAL',
+            estimatedTime: 8,
+            energySaving: 35,
+            items: [item.id],
+            location: 'Module-A-Compartment-1',
+            reason: 'Critical items require immediate accessibility for emergencies'
+          });
+        }
       });
 
-      // 5. Temperature Optimization
-      const tempMismatches = cargoItems.filter(item => 
-        item.location && 
-        item.temperature && 
-        item.temperature !== item.location.temperature
-      );
-
-      if (tempMismatches.length > 0) {
-        newSuggestions.push({
-          type: 'REARRANGE',
-          priority: 'HIGH',
-          title: `${tempMismatches.length} Temperature Mismatches`,
-          description: 'Items stored at incorrect temperatures',
-          estimatedTime: 180,
-          energyImpact: 6,
-          items: tempMismatches.map(item => item.id),
-          actions: ['Move to appropriate temperature zones']
-        });
-      }
-
-      setSuggestions(newSuggestions.sort((a, b) => {
-        const priorityOrder = { 'URGENT': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
-      }));
-      
-      setIsOptimizing(false);
+      setSuggestions(prev => [...prev, ...newSuggestions]);
+      setIsLoading(false);
     }, 2000);
-  }, [cargoItems, storageLocations]);
+  }, [items]);
 
-  // Logging function
-  const logAction = (action: ActionLog['action'], itemId: string, itemName: string, duration: number, success: boolean, notes?: string) => {
-    const newLog: ActionLog = {
-      id: `LOG-${Date.now()}`,
-      timestamp: new Date(),
-      action,
-      itemId,
-      itemName,
-      location: cargoItems.find(item => item.id === itemId)?.location?.compartment,
-      astronautId: 'AST-001', // In real implementation, this would be the current user
-      duration,
-      success,
-      notes
-    };
+  // Analytics calculations
+  const analytics = useMemo((): AnalyticsData => {
+    const totalItems = items.length;
+    const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+    const totalVolume = items.reduce((sum, item) => sum + item.volume, 0);
+    
+    const categoryBreakdown = items.reduce((acc, item) => {
+      acc[item.category] = (acc[item.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-    setActionLogs(prev => [newLog, ...prev]);
-  };
+    const priorityBreakdown = items.reduce((acc, item) => {
+      acc[item.priority] = (acc[item.priority] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-  // Calculate analytics
-  const analytics = useMemo(() => {
-    const totalItems = cargoItems.length;
-    const activeItems = cargoItems.filter(item => item.status === 'ACTIVE').length;
-    const expiredItems = cargoItems.filter(item => item.status === 'EXPIRED').length;
-    const wasteItems = cargoItems.filter(item => item.status === 'WASTE').length;
+    const activeItems = items.filter(item => item.status === 'ACTIVE');
+    const utilizationRate = activeItems.length / totalItems * 100;
     
-    const totalWeight = cargoItems.reduce((sum, item) => sum + item.weight, 0);
-    const totalVolume = cargoItems.reduce((sum, item) => sum + item.volume, 0);
+    const averageAccessTime = activeItems.reduce((sum, item) => sum + item.accessCount, 0) / activeItems.length;
     
-    const storageUtilization = storageLocations.reduce((sum, loc) => sum + (loc.currentVolume / loc.maxVolume), 0) / storageLocations.length;
-    
-    const avgAccessTime = actionLogs
-      .filter(log => log.action === 'RETRIEVE')
-      .reduce((sum, log) => sum + log.duration, 0) / Math.max(actionLogs.filter(log => log.action === 'RETRIEVE').length, 1);
+    const now = new Date();
+    const expiringItems = items.filter(item => 
+      item.expiryDate && 
+      item.expiryDate > now && 
+      item.expiryDate <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+    ).length;
+
+    const wasteItems = items.filter(item => item.status === 'EXPIRED' || item.status === 'WASTE').length;
+    const criticalItems = items.filter(item => item.priority === 'CRITICAL').length;
 
     return {
       totalItems,
-      activeItems,
-      expiredItems,
+      totalWeight,
+      totalVolume,
+      categoryBreakdown,
+      priorityBreakdown,
+      utilizationRate,
+      averageAccessTime,
+      expiringItems,
       wasteItems,
-      totalWeight: Math.round(totalWeight * 10) / 10,
-      totalVolume: Math.round(totalVolume * 10) / 10,
-      storageUtilization: Math.round(storageUtilization * 100),
-      avgAccessTime: Math.round(avgAccessTime)
+      criticalItems
     };
-  }, [cargoItems, storageLocations, actionLogs]);
+  }, [items]);
+
+  // Filter and sort items
+  const filteredItems = useMemo(() => {
+    let filtered = items.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = filterCategory === 'ALL' || item.category === filterCategory;
+      const matchesPriority = filterPriority === 'ALL' || item.priority === filterPriority;
+      
+      return matchesSearch && matchesCategory && matchesPriority;
+    });
+
+    // Sort items
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'priority':
+          const priorityOrder = { 'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+          return priorityOrder[b.priority] - priorityOrder[a.priority];
+        case 'expiry':
+          if (!a.expiryDate && !b.expiryDate) return 0;
+          if (!a.expiryDate) return 1;
+          if (!b.expiryDate) return -1;
+          return a.expiryDate.getTime() - b.expiryDate.getTime();
+        case 'access':
+          return b.accessCount - a.accessCount;
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [items, searchQuery, filterCategory, filterPriority, sortBy]);
 
   const renderInventory = () => (
     <div className="space-y-6">
       {/* Search and Filters */}
       <div className="bg-gray-800/50 rounded-lg p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-3 text-gray-400" size={20} />
             <input
@@ -436,8 +415,8 @@ export const CargoManagement: React.FC = () => {
           </div>
           
           <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
             className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             <option value="ALL">All Categories</option>
@@ -450,8 +429,8 @@ export const CargoManagement: React.FC = () => {
           </select>
           
           <select
-            value={selectedPriority}
-            onChange={(e) => setSelectedPriority(e.target.value)}
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
             className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             <option value="ALL">All Priorities</option>
@@ -460,170 +439,250 @@ export const CargoManagement: React.FC = () => {
             <option value="MEDIUM">Medium</option>
             <option value="LOW">Low</option>
           </select>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          >
+            <option value="priority">Sort by Priority</option>
+            <option value="name">Sort by Name</option>
+            <option value="expiry">Sort by Expiry</option>
+            <option value="access">Sort by Access Count</option>
+          </select>
         </div>
       </div>
 
-      {/* Inventory Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Items Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredItems.map((item) => (
-          <div key={item.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <Package className="text-cyan-400" size={20} />
-                <span className="font-semibold text-white">{item.name}</span>
+          <div 
+            key={item.id} 
+            className={`bg-gray-800/50 rounded-lg p-6 border-l-4 transition-all hover:shadow-lg ${
+              item.priority === 'CRITICAL' ? 'border-red-500' :
+              item.priority === 'HIGH' ? 'border-orange-500' :
+              item.priority === 'MEDIUM' ? 'border-yellow-500' : 'border-green-500'
+            } ${item.status === 'EXPIRED' ? 'opacity-60' : ''}`}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-1">{item.name}</h3>
+                <p className="text-sm text-gray-400">{item.description}</p>
               </div>
-              <span className={`px-2 py-1 rounded text-xs font-bold ${
-                item.priority === 'CRITICAL' ? 'bg-red-600 text-white' :
-                item.priority === 'HIGH' ? 'bg-orange-600 text-white' :
-                item.priority === 'MEDIUM' ? 'bg-yellow-600 text-black' :
-                'bg-green-600 text-white'
-              }`}>
-                {item.priority}
-              </span>
+              <div className="flex flex-col items-end space-y-1">
+                <span className={`px-2 py-1 rounded text-xs font-bold ${
+                  item.priority === 'CRITICAL' ? 'bg-red-600 text-white' :
+                  item.priority === 'HIGH' ? 'bg-orange-600 text-white' :
+                  item.priority === 'MEDIUM' ? 'bg-yellow-600 text-black' :
+                  'bg-green-600 text-white'
+                }`}>
+                  {item.priority}
+                </span>
+                <span className={`px-2 py-1 rounded text-xs ${
+                  item.status === 'ACTIVE' ? 'bg-green-600/20 text-green-300' :
+                  item.status === 'EXPIRED' ? 'bg-red-600/20 text-red-300' :
+                  'bg-gray-600/20 text-gray-300'
+                }`}>
+                  {item.status}
+                </span>
+              </div>
             </div>
-            
-            <div className="space-y-2 text-sm text-gray-300">
-              <div className="flex justify-between">
-                <span>Category:</span>
-                <span className="text-cyan-400">{item.category}</span>
+
+            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+              <div>
+                <span className="text-gray-400">Weight:</span>
+                <span className="text-cyan-400 ml-2">{item.weight}kg</span>
               </div>
-              <div className="flex justify-between">
-                <span>Weight:</span>
-                <span>{item.weight} kg</span>
+              <div>
+                <span className="text-gray-400">Volume:</span>
+                <span className="text-cyan-400 ml-2">{item.volume}L</span>
               </div>
-              <div className="flex justify-between">
-                <span>Volume:</span>
-                <span>{item.volume} m³</span>
+              <div>
+                <span className="text-gray-400">Category:</span>
+                <span className="text-cyan-400 ml-2">{item.category}</span>
               </div>
-              {item.location && (
-                <div className="flex justify-between">
-                  <span>Location:</span>
-                  <span>{item.location.compartment} - {item.location.rack}</span>
-                </div>
-              )}
+              <div>
+                <span className="text-gray-400">Access:</span>
+                <span className="text-cyan-400 ml-2">{item.accessCount}x</span>
+              </div>
+            </div>
+
+            <div className="text-sm mb-4">
+              <div className="flex items-center mb-2">
+                <MapPin className="text-gray-400 mr-2" size={16} />
+                <span className="text-gray-300">{item.location}</span>
+              </div>
               {item.expiryDate && (
-                <div className="flex justify-between">
-                  <span>Expires:</span>
-                  <span className={
-                    item.expiryDate.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000 
-                      ? 'text-red-400' : 'text-green-400'
-                  }>
-                    {item.expiryDate.toLocaleDateString()}
+                <div className="flex items-center">
+                  <Clock className="text-orange-400 mr-2" size={16} />
+                  <span className={`${
+                    item.expiryDate < new Date() ? 'text-red-400' :
+                    item.expiryDate < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) ? 'text-orange-400' :
+                    'text-green-400'
+                  }`}>
+                    Expires: {item.expiryDate.toLocaleDateString()}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span>Access Freq:</span>
-                <span>{item.accessFrequency} times</span>
-              </div>
+              {item.fragile && (
+                <div className="flex items-center mt-1">
+                  <AlertTriangle className="text-yellow-400 mr-2" size={16} />
+                  <span className="text-yellow-400 text-xs">Fragile Item</span>
+                </div>
+              )}
             </div>
-            
-            <div className="flex items-center space-x-2 mt-3">
-              <span className={`w-3 h-3 rounded-full ${
-                item.status === 'ACTIVE' ? 'bg-green-500' :
-                item.status === 'EXPIRED' ? 'bg-red-500' :
-                item.status === 'WASTE' ? 'bg-gray-500' : 'bg-yellow-500'
-              }`}></span>
-              <span className="text-sm text-gray-400">{item.status}</span>
+
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => {
+                  // Handle item access
+                  setItems(prev => prev.map(i => 
+                    i.id === item.id 
+                      ? { ...i, accessCount: i.accessCount + 1, lastAccessed: new Date() }
+                      : i
+                  ));
+                }}
+                className="px-3 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded text-sm transition-colors"
+              >
+                Access Item
+              </button>
+              <div className="text-xs text-gray-500">
+                Added: {item.addedDate.toLocaleDateString()}
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {filteredItems.length === 0 && (
+        <div className="text-center py-12">
+          <Package className="mx-auto mb-4 text-gray-400" size={64} />
+          <h3 className="text-xl font-semibold text-gray-400 mb-2">No Items Found</h3>
+          <p className="text-gray-500">
+            {searchQuery || filterCategory !== 'ALL' || filterPriority !== 'ALL' 
+              ? 'Try adjusting your search criteria' 
+              : 'No cargo items in inventory'}
+          </p>
+        </div>
+      )}
     </div>
   );
 
   const renderOptimization = () => (
     <div className="space-y-6">
       <div className="bg-gray-800/50 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-cyan-400 flex items-center">
-            <Target className="mr-2" />
-            AI-Powered Cargo Optimization
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-cyan-400 flex items-center mb-4 lg:mb-0">
+            <Brain className="mr-2" />
+            AI Optimization Engine
           </h3>
           <button
             onClick={generateOptimizationSuggestions}
-            disabled={isOptimizing}
-            className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-              isOptimizing 
-                ? 'bg-gray-600 cursor-not-allowed' 
-                : 'bg-cyan-600 hover:bg-cyan-700'
-            } text-white`}
+            disabled={isLoading}
+            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center"
           >
-            {isOptimizing ? (
+            {isLoading ? (
               <RefreshCw className="mr-2 animate-spin" size={16} />
             ) : (
-              <Zap className="mr-2" size={16} />
+              <Lightbulb className="mr-2" size={16} />
             )}
-            {isOptimizing ? 'Analyzing...' : 'Generate Suggestions'}
+            {isLoading ? 'Analyzing...' : 'Generate New Suggestions'}
           </button>
         </div>
 
-        {isOptimizing ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-gray-300">Running optimization algorithms...</p>
+        {isLoading && (
+          <div className="bg-purple-900/20 border border-purple-500 rounded-lg p-6 mb-6">
+            <div className="flex items-center space-y-0 space-x-4">
+              <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+              <div>
+                <h4 className="text-purple-400 font-bold">AI Analysis in Progress</h4>
+                <p className="text-purple-300 text-sm">
+                  Analyzing cargo placement efficiency, access patterns, and optimization opportunities...
+                </p>
+              </div>
             </div>
           </div>
-        ) : suggestions.length > 0 ? (
-          <div className="space-y-4">
-            {suggestions.map((suggestion, index) => (
-              <div key={index} className="bg-gray-700/50 rounded-lg p-4 border-l-4 border-cyan-500">
-                <div className="flex items-start justify-between mb-3">
-                  <h4 className="text-lg font-semibold text-cyan-400">{suggestion.title}</h4>
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 rounded text-xs font-bold ${
-                      suggestion.priority === 'URGENT' ? 'bg-red-600 text-white' :
-                      suggestion.priority === 'HIGH' ? 'bg-orange-600 text-white' :
-                      suggestion.priority === 'MEDIUM' ? 'bg-yellow-600 text-black' :
-                      'bg-green-600 text-white'
-                    }`}>
-                      {suggestion.priority}
-                    </span>
-                    <span className="text-sm text-gray-400">{suggestion.type}</span>
-                  </div>
-                </div>
-                
-                <p className="text-gray-300 mb-3">{suggestion.description}</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="text-blue-400" size={16} />
-                    <span className="text-sm text-gray-300">{suggestion.estimatedTime}s</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Zap className="text-yellow-400" size={16} />
-                    <span className="text-sm text-gray-300">Energy: {suggestion.energyImpact}/10</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Package className="text-green-400" size={16} />
-                    <span className="text-sm text-gray-300">{suggestion.items.length} items</span>
-                  </div>
-                </div>
-                
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {suggestions.map((suggestion) => (
+            <div 
+              key={suggestion.id}
+              className={`border rounded-lg p-6 ${
+                suggestion.priority === 'CRITICAL' ? 'bg-red-900/20 border-red-500' :
+                suggestion.priority === 'HIGH' ? 'bg-orange-900/20 border-orange-500' :
+                suggestion.priority === 'MEDIUM' ? 'bg-yellow-900/20 border-yellow-500' :
+                'bg-green-900/20 border-green-500'
+              }`}
+            >
+              <div className="flex items-start justify-between mb-4">
                 <div>
-                  <span className="text-sm text-gray-400 block mb-1">Recommended Actions:</span>
-                  <ul className="text-sm text-gray-300">
-                    {suggestion.actions.map((action, actionIndex) => (
-                      <li key={actionIndex} className="mb-1">• {action}</li>
-                    ))}
-                  </ul>
+                  <h4 className={`text-lg font-bold mb-2 ${
+                    suggestion.priority === 'CRITICAL' ? 'text-red-400' :
+                    suggestion.priority === 'HIGH' ? 'text-orange-400' :
+                    suggestion.priority === 'MEDIUM' ? 'text-yellow-400' :
+                    'text-green-400'
+                  }`}>
+                    {suggestion.title}
+                  </h4>
+                  <span className={`px-2 py-1 rounded text-xs font-bold ${
+                    suggestion.priority === 'CRITICAL' ? 'bg-red-600 text-white' :
+                    suggestion.priority === 'HIGH' ? 'bg-orange-600 text-white' :
+                    suggestion.priority === 'MEDIUM' ? 'bg-yellow-600 text-black' :
+                    'bg-green-600 text-white'
+                  }`}>
+                    {suggestion.type}
+                  </span>
                 </div>
-                
-                <button 
-                  onClick={() => logAction('REARRANGE', suggestion.items[0] || 'SYSTEM', 'Optimization Action', suggestion.estimatedTime, true, suggestion.title)}
-                  className="mt-3 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm transition-colors"
-                >
-                  Execute Suggestion
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-cyan-400">
+                    {suggestion.energySaving}%
+                  </div>
+                  <div className="text-xs text-gray-400">Energy Saved</div>
+                </div>
+              </div>
+
+              <p className="text-gray-300 mb-4">{suggestion.description}</p>
+
+              <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                <div>
+                  <span className="text-gray-400">Time Required:</span>
+                  <span className="text-cyan-400 ml-2">{suggestion.estimatedTime} min</span>
+                </div>
+                <div>
+                  <span className="text-gray-400">Items Affected:</span>
+                  <span className="text-cyan-400 ml-2">{suggestion.items.length}</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-gray-400">Target Location:</span>
+                  <span className="text-cyan-400 ml-2">{suggestion.location}</span>
+                </div>
+              </div>
+
+              <div className="bg-gray-700/30 rounded p-3 mb-4">
+                <h5 className="text-sm font-semibold text-gray-300 mb-1">AI Reasoning:</h5>
+                <p className="text-xs text-gray-400">{suggestion.reason}</p>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors">
+                  Implement Suggestion
+                </button>
+                <button className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors">
+                  Dismiss
                 </button>
               </div>
-            ))}
-          </div>
-        ) : (
+            </div>
+          ))}
+        </div>
+
+        {suggestions.length === 0 && !isLoading && (
           <div className="text-center py-12">
-            <Target className="mx-auto mb-4 text-cyan-400" size={48} />
-            <p className="text-gray-300 text-lg mb-4">No optimization suggestions available</p>
-            <p className="text-gray-400">Click "Generate Suggestions" to analyze your cargo</p>
+            <Target className="mx-auto mb-4 text-gray-400" size={64} />
+            <h3 className="text-xl font-semibold text-gray-400 mb-2">No Active Suggestions</h3>
+            <p className="text-gray-500 mb-4">
+              Your cargo management is optimized! Generate new suggestions to find improvements.
+            </p>
           </div>
         )}
       </div>
@@ -641,108 +700,100 @@ export const CargoManagement: React.FC = () => {
           </div>
           <span className="text-2xl font-bold text-blue-400">{analytics.totalItems}</span>
         </div>
-        
+
+        <div className="bg-purple-900/30 rounded-lg p-4">
+          <div className="flex items-center mb-2">
+            <Weight className="text-purple-400 mr-2" size={20} />
+            <span className="text-sm text-gray-300">Total Weight</span>
+          </div>
+          <span className="text-2xl font-bold text-purple-400">{analytics.totalWeight.toFixed(1)}kg</span>
+        </div>
+
         <div className="bg-green-900/30 rounded-lg p-4">
           <div className="flex items-center mb-2">
-            <CheckCircle className="text-green-400 mr-2" size={20} />
-            <span className="text-sm text-gray-300">Active Items</span>
+            <TrendingUp className="text-green-400 mr-2" size={20} />
+            <span className="text-sm text-gray-300">Utilization</span>
           </div>
-          <span className="text-2xl font-bold text-green-400">{analytics.activeItems}</span>
+          <span className="text-2xl font-bold text-green-400">{analytics.utilizationRate.toFixed(1)}%</span>
         </div>
-        
+
         <div className="bg-red-900/30 rounded-lg p-4">
           <div className="flex items-center mb-2">
             <AlertTriangle className="text-red-400 mr-2" size={20} />
-            <span className="text-sm text-gray-300">Expired/Waste</span>
+            <span className="text-sm text-gray-300">Critical Items</span>
           </div>
-          <span className="text-2xl font-bold text-red-400">{analytics.expiredItems + analytics.wasteItems}</span>
-        </div>
-        
-        <div className="bg-purple-900/30 rounded-lg p-4">
-          <div className="flex items-center mb-2">
-            <BarChart3 className="text-purple-400 mr-2" size={20} />
-            <span className="text-sm text-gray-300">Storage Util.</span>
-          </div>
-          <span className="text-2xl font-bold text-purple-400">{analytics.storageUtilization}%</span>
+          <span className="text-2xl font-bold text-red-400">{analytics.criticalItems}</span>
         </div>
       </div>
 
-      {/* Detailed Analytics */}
+      {/* Category Breakdown */}
       <div className="bg-gray-800/50 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-cyan-400 mb-6 flex items-center">
+        <h3 className="text-xl font-bold text-cyan-400 mb-4 flex items-center">
           <BarChart3 className="mr-2" />
-          Cargo Analytics Dashboard
+          Category Distribution
         </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-yellow-400">Physical Metrics</h4>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Total Weight:</span>
-                <span className="text-cyan-400 font-bold">{analytics.totalWeight} kg</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {Object.entries(analytics.categoryBreakdown).map(([category, count]) => (
+            <div key={category} className="bg-gray-700/30 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-300">{category}</span>
+                <span className="text-cyan-400 font-bold">{count}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Total Volume:</span>
-                <span className="text-cyan-400 font-bold">{analytics.totalVolume} m³</span>
+              <div className="w-full bg-gray-600 rounded-full h-2">
+                <div
+                  className="bg-cyan-500 h-2 rounded-full"
+                  style={{ width: `${(count / analytics.totalItems) * 100}%` }}
+                ></div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Avg Access Time:</span>
-                <span className="text-cyan-400 font-bold">{analytics.avgAccessTime}s</span>
+              <div className="text-xs text-gray-400 mt-1">
+                {((count / analytics.totalItems) * 100).toFixed(1)}%
               </div>
             </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-yellow-400">Storage Locations</h4>
-            <div className="space-y-2">
-              {storageLocations.map((location, index) => (
-                <div key={index} className="bg-gray-700/50 rounded p-3">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-300">{location.compartment} - {location.rack}</span>
-                    <span className="text-xs text-gray-400">Access: {location.accessibility}/10</span>
-                  </div>
-                  <div className="w-full bg-gray-600 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full"
-                      style={{ width: `${(location.currentVolume / location.maxVolume) * 100}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
-                    <span>{location.currentVolume.toFixed(1)} / {location.maxVolume} m³</span>
-                    <span>{Math.round((location.currentVolume / location.maxVolume) * 100)}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Category Distribution */}
-      <div className="bg-gray-800/50 rounded-lg p-6">
-        <h3 className="text-lg font-bold text-cyan-400 mb-4">Category Distribution</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {['FOOD', 'MEDICAL', 'EQUIPMENT', 'RESEARCH', 'MAINTENANCE', 'PERSONAL'].map(category => {
-            const count = cargoItems.filter(item => item.category === category).length;
-            const percentage = count > 0 ? Math.round((count / cargoItems.length) * 100) : 0;
-            
-            return (
-              <div key={category} className="bg-gray-700/50 rounded-lg p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-300">{category}</span>
-                  <span className="text-cyan-400 font-bold">{count}</span>
-                </div>
-                <div className="w-full bg-gray-600 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full"
-                    style={{ width: `${percentage}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-gray-400">{percentage}%</span>
+      {/* Priority and Status Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-gray-800/50 rounded-lg p-6">
+          <h4 className="text-lg font-bold text-cyan-400 mb-4">Priority Breakdown</h4>
+          <div className="space-y-3">
+            {Object.entries(analytics.priorityBreakdown).map(([priority, count]) => (
+              <div key={priority} className="flex justify-between items-center">
+                <span className={`px-2 py-1 rounded text-xs font-bold ${
+                  priority === 'CRITICAL' ? 'bg-red-600 text-white' :
+                  priority === 'HIGH' ? 'bg-orange-600 text-white' :
+                  priority === 'MEDIUM' ? 'bg-yellow-600 text-black' :
+                  'bg-green-600 text-white'
+                }`}>
+                  {priority}
+                </span>
+                <span className="text-cyan-400 font-bold">{count} items</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-gray-800/50 rounded-lg p-6">
+          <h4 className="text-lg font-bold text-cyan-400 mb-4">Status Overview</h4>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Expiring Soon (30 days)</span>
+              <span className="text-orange-400 font-bold">{analytics.expiringItems} items</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Waste Items</span>
+              <span className="text-red-400 font-bold">{analytics.wasteItems} items</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Average Access Count</span>
+              <span className="text-cyan-400 font-bold">{analytics.averageAccessTime.toFixed(1)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Total Volume Used</span>
+              <span className="text-purple-400 font-bold">{analytics.totalVolume.toFixed(1)}L</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -753,70 +804,79 @@ export const CargoManagement: React.FC = () => {
       <div className="bg-gray-800/50 rounded-lg p-6">
         <h3 className="text-xl font-bold text-cyan-400 mb-6 flex items-center">
           <Activity className="mr-2" />
-          Action Log History
+          Astronaut Action Logs
         </h3>
-        
-        <div className="space-y-3">
-          {actionLogs.length > 0 ? actionLogs.map((log) => (
-            <div key={log.id} className="bg-gray-700/50 rounded-lg p-4 border-l-4 border-cyan-500">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    log.success ? 'bg-green-500' : 'bg-red-500'
-                  }`}></div>
+
+        <div className="space-y-4">
+          {actionLogs.map((log) => (
+            <div key={log.id} className="bg-gray-700/30 rounded-lg p-4 border-l-4 border-cyan-500">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-2">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <User className="text-cyan-400" size={16} />
+                    <span className="font-semibold text-white">{log.astronaut}</span>
+                  </div>
                   <span className={`px-2 py-1 rounded text-xs font-bold ${
-                    log.action === 'RETRIEVE' ? 'bg-blue-600 text-white' :
-                    log.action === 'STORE' ? 'bg-green-600 text-white' :
-                    log.action === 'REARRANGE' ? 'bg-yellow-600 text-black' :
-                    log.action === 'DISPOSE' ? 'bg-red-600 text-white' :
-                    'bg-purple-600 text-white'
+                    log.action === 'ADD' ? 'bg-green-600 text-white' :
+                    log.action === 'REMOVE' ? 'bg-red-600 text-white' :
+                    log.action === 'MOVE' ? 'bg-blue-600 text-white' :
+                    log.action === 'ACCESS' ? 'bg-purple-600 text-white' :
+                    log.action === 'DISPOSE' ? 'bg-orange-600 text-white' :
+                    'bg-gray-600 text-white'
                   }`}>
                     {log.action}
                   </span>
-                  <span className="font-semibold text-white">{log.itemName}</span>
+                  {log.success ? (
+                    <CheckCircle className="text-green-400" size={16} />
+                  ) : (
+                    <AlertTriangle className="text-red-400" size={16} />
+                  )}
                 </div>
-                <div className="text-right text-sm text-gray-400">
-                  <div>{log.timestamp.toLocaleDateString()}</div>
-                  <div>{log.timestamp.toLocaleTimeString()}</div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-300">
-                <div>
-                  <span className="text-gray-400">Item ID: </span>
-                  <span>{log.itemId}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400">Duration: </span>
-                  <span>{log.duration}s</span>
-                </div>
-                <div>
-                  <span className="text-gray-400">Astronaut: </span>
-                  <span>{log.astronautId}</span>
+                <div className="text-sm text-gray-400 mt-2 lg:mt-0">
+                  {log.timestamp.toLocaleString()}
                 </div>
               </div>
-              
-              {log.location && (
-                <div className="mt-2 text-sm">
-                  <span className="text-gray-400">Location: </span>
-                  <span className="text-cyan-400">{log.location}</span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-400">Item:</span>
+                  <span className="text-cyan-400 ml-2">{log.itemName}</span>
                 </div>
-              )}
-              
+                {log.fromLocation && (
+                  <div>
+                    <span className="text-gray-400">From:</span>
+                    <span className="text-orange-400 ml-2">{log.fromLocation}</span>
+                  </div>
+                )}
+                {log.toLocation && (
+                  <div>
+                    <span className="text-gray-400">To:</span>
+                    <span className="text-green-400 ml-2">{log.toLocation}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-gray-400">Duration:</span>
+                  <span className="text-purple-400 ml-2">{log.duration} min</span>
+                </div>
+              </div>
+
               {log.notes && (
-                <div className="mt-2 text-sm text-gray-300">
-                  <span className="text-gray-400">Notes: </span>
-                  <span>{log.notes}</span>
+                <div className="mt-3 bg-gray-600/30 rounded p-2">
+                  <span className="text-xs text-gray-400">Notes: </span>
+                  <span className="text-xs text-gray-300">{log.notes}</span>
                 </div>
               )}
             </div>
-          )) : (
-            <div className="text-center py-12">
-              <Activity className="mx-auto mb-4 text-gray-400" size={48} />
-              <p className="text-gray-400">No action logs available</p>
-            </div>
-          )}
+          ))}
         </div>
+
+        {actionLogs.length === 0 && (
+          <div className="text-center py-12">
+            <Activity className="mx-auto mb-4 text-gray-400" size={64} />
+            <h3 className="text-xl font-semibold text-gray-400 mb-2">No Activity Logs</h3>
+            <p className="text-gray-500">Astronaut actions will be logged here</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -826,20 +886,20 @@ export const CargoManagement: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-4">
-            Space Station Cargo Management System
+            Cargo Management System
           </h1>
           <p className="text-xl text-gray-300">
-            AI-Powered Stowage Advisory • Efficient Space Utilization • Smart Retrieval
+            AI-Powered Space Station Inventory Management
           </p>
           <p className="text-sm text-gray-400 mt-2">
-            Optimized for minimal power consumption and maximum efficiency in space operations
+            Smart Placement • Quick Retrieval • Waste Management • Activity Tracking
           </p>
         </div>
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap justify-center mb-8 space-x-1">
           {[
-            { key: 'inventory', label: 'Cargo Inventory', icon: Package },
+            { key: 'inventory', label: 'Inventory', icon: Package },
             { key: 'optimization', label: 'AI Optimization', icon: Target },
             { key: 'analytics', label: 'Analytics', icon: BarChart3 },
             { key: 'logs', label: 'Action Logs', icon: Activity }

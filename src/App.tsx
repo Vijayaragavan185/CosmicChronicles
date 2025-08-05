@@ -16,7 +16,8 @@ import { InterstellarTech } from './components/InterstellarTech';
 import { SpaceEducation } from './components/SpaceEducation';
 import { SpaceFranchise } from './components/SpaceFranchise';
 import SolarFlare from './components/SolarFlare';
-
+import { CargoManagement } from './components/CargoManagement';
+import { ExoplanetPredictor } from './components/ExoplanetPredictor';
 import { SpaceShuttleIntro } from './components/SpaceShuttleIntro';
 import { VisualAssist } from './components/VisualAssist';
 import { VoiceRecognition } from './components/VoiceRecognition';
@@ -24,14 +25,12 @@ import { useScreenReader } from './hooks/useScreenReader';
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation';
 import { getEventsForDate } from './data/events';
 import { AstronomicalEvent } from './types/Event';
+import SonicCosmos from './components/SonicCosmos';
+import ARSolarSystem from './components/ARSolarSystem';
+import { Headphones, Smartphone } from 'lucide-react';
 
-import { CargoManagement } from './components/CargoManagement';
-
-// Change line ~21
-type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'interstellar';
-
-
-
+//type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'exoplanet' | 'interstellar';
+type ActiveSection = 'events' | 'education' | 'timeline' | 'solar-system' | 'calculators' | 'games' | 'horoscope' | 'social' | 'solarflare' | 'cargo' | 'exoplanet' | 'interstellar' | 'sonic' | 'ar-solar';
 function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<AstronomicalEvent[]>([]);
@@ -179,8 +178,8 @@ function App() {
     setShowIntro(false);
   };
 
-
   const navigationItems = [
+<<<<<<< HEAD
     { id: 'cargo', label: 'Cargo Management', icon: ShoppingCart, color: 'from-purple-600 to-pink-400'},
     { id: 'solarflare', label: 'Solar Flare', icon: Zap, color: 'from-purple-600 to-pink-400' },
     { id: 'events', label: 'Events', icon: Telescope, color: 'from-purple-600 to-pink-400' },
@@ -194,8 +193,23 @@ function App() {
     { id: 'social', label: 'Social', icon: Users, color: 'from-purple-600 to-pink-400' },
     
     
+=======
+    { id: 'events', label: 'Events', icon: Telescope, color: 'from-purple-600 to-blue-600' },
+    { id: 'timeline', label: 'Timeline', icon: Rocket, color: 'from-orange-600 to-red-600' },
+    { id: 'solar-system', label: 'Solar System', icon: Orbit, color: 'from-yellow-600 to-orange-600' },
+    { id: 'education', label: 'Education', icon: Play, color: 'from-red-600 to-pink-600' },
+    { id: 'calculators', label: 'Calculators', icon: Calculator, color: 'from-teal-600 to-green-600' },
+    { id: 'interstellar', label: 'Interstellar', icon: Zap, color: 'from-violet-600 to-purple-600' },
+    { id: 'games', label: 'Games', icon: Gamepad2, color: 'from-green-600 to-emerald-600' },
+    { id: 'horoscope', label: 'Horoscope', icon: Stars, color: 'from-indigo-600 to-purple-600' },
+    { id: 'social', label: 'Social', icon: Users, color: 'from-blue-600 to-cyan-600' },
+    { id: 'solarflare', label: 'Solar Flare', icon: Zap, color: 'from-orange-600 to-red-600' },
+    { id: 'cargo', label: 'Cargo Management', icon: ShoppingCart, color: 'from-cyan-600 to-blue-600' },
+    { id: 'sonic', label: 'Sonic Cosmos', icon: Headphones, color: 'from-purple-600 to-pink-600' },
+    { id: 'ar-solar', label: 'AR Solar System', icon: Smartphone, color: 'from-blue-600 to-cyan-600' },
+    { id: 'exoplanet', label: 'Exoplanet AI', icon: Globe, color: 'from-green-600 to-emerald-600' }
+>>>>>>> 016bc5023e11c89c5c733a63bf82ae32dcbb4924
   ];
-
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -215,10 +229,16 @@ function App() {
         return <SocialHub selectedDate={selectedDate} />;
       case 'solarflare':
         return <SolarFlare />;
-      case 'interstellar':
-        return <InterstellarTech />;
       case 'cargo':
         return <CargoManagement />;
+      case 'exoplanet':
+        return <ExoplanetPredictor />;
+      case 'interstellar':
+        return <InterstellarTech />;
+      case 'sonic':
+        return <SonicCosmos />;
+      case 'ar-solar':
+        return <ARSolarSystem />;
       case 'events':
       default:
         return (
@@ -325,7 +345,7 @@ function App() {
 
         {/* Navigation */}
         <div className="container mx-auto px-6 mb-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-3 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 max-w-7xl mx-auto">
             {navigationItems
               .filter(item => !visionSupportMode || ['events', 'timeline'].includes(item.id))
               .map((item) => {
